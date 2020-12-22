@@ -7,17 +7,22 @@ import GFSuperImpose as GFSuperImpose
 import VegetationIndices as VegetationIndices
 import training_set as training_set
 
+###Input files (see readme)
+#Orfeo Toolbox
 otb_path = '/home/johanndesloires/Documents/OTB-7.2.0-Linux64/bin'
+##Theia folder pulled
 folder_theia = '/home/johanndesloires/Documents/theia_download'
 os.path.exists(folder_theia)
+#Folder to save images preprocessed
 path_output = '/home/johanndesloires/Documents/Sentinel2/GEOTIFFS/TEST'
-
+#Input vector for training process
 vector_path = './Vectors/DATABASE_SAMPLED/DATABASE_SAMPLED.shp'
+#Polygon of the Area of Interest
 mask_data = './Vectors/INTERSECTION_TILE_DEPARTMENT/INTERSECTION_TILE_DEPARTMENT.shp'
 mask_feature = 'DN'
 
 ##################################################################################
-
+#Download Sentinel-2 images
 download = unzip_data.TheiaDownload(folder_theia,
                                     tile_name="T31TCJ",
                                     start_date="2018-11-20",
@@ -27,8 +32,7 @@ download.download_data()
 download.unzip_data()
 
 ##################################################################################
-# Get GEOTIFFS from Sentinel-2 and Theia
-
+#Rasterize labels using a reference file from Sentinel-2 folders
 reference_file = stack_data.GetRandomTheiaFile(folder_theia, band_name='B2')
 
 rasterize_labels = stack_data.RasterLabels(vector_path=vector_path,
@@ -40,6 +44,7 @@ rasterize_labels = stack_data.RasterLabels(vector_path=vector_path,
 
 rasterize_labels.rasterize_labels()
 
+#GEOTIFFS concatenation cropped according to the AOI
 concatenate_images = stack_data.StackFoldersSentinel2(extent_vector=mask_data,
                                                       bands=['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11',
                                                              'B12'],
@@ -52,7 +57,7 @@ concatenate_images.ExtractImagesFolder()
 concatenate_images.CropImages()
 
 ###############################################################################################################
-
+#Cloud masking interpolation
 GapFilling.GapFill(otb_path,
                    path_output,
                    bands=['B2', 'B3', 'B4', 'B8'],
@@ -62,23 +67,26 @@ GapFilling.GapFill(otb_path,
                    path_output,
                    bands=['B5', 'B6', 'B7', 'B8A', 'B11', 'B12'],
                    res=20)
-
+#Put 20 meters images into 10 meters
 GFSuperImpose.GFSuperImpose(otb_path,
                             path_output,
                             bands_20=['B5', 'B6', 'B7', 'B8A', 'B11', 'B12'])
 
 ##################################################################################################################
-
+#Compute NDVI, GNDVI and NDWI
 vis = VegetationIndices.VegetationIndices(saving_path=path_output,
                                           band_names=['B2', 'B4', 'B8', 'B11'])
 
 vis.compute_VIs()
 
 ##################################################################################################################
-
+#Built the training set for given features
 features = ['B2', 'B3', 'B4', 'NDVI', 'GNDVI', 'NDWI']
+#this file has been automatically create during StackFoldersSentinel2()
 dates = pd.read_csv(os.path.join(path_output, 'dates.csv'))
+#Path to save the output training set
 path_ts = '/home/johanndesloires/Documents/Sentinel2/FinalDB'
+#Random geotiff file created from the steps above that will be used as geo reference
 reference_file = os.path.join(path_output, 'GFstack_B2_crop.tif')
 
 output_files = training_set.TrainingSet(path_images=path_output,
