@@ -181,6 +181,7 @@ class RasterLabels:
         with rasterio.open(self.reference_file) as src0:
             meta = src0.meta
             meta['nodata'] = 0.0
+            meta['dtype'] = 'int16'
 
         class_array = Vector_to_Raster(self.saving_path, self.vector_path, self.reference_file, self.ObjectID)
         class_array = self.binary_erosion(class_array)

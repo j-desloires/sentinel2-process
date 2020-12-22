@@ -4,6 +4,7 @@ import numpy as np
 import rasterio
 
 
+
 class VegetationIndices:
     def __init__(self,
                  saving_path = './Sentinel2/GEOTIFFS/',
