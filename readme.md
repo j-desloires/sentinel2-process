@@ -2,7 +2,7 @@ The purpose of this module is to download and preprocess Sentinel-2 data directl
 
 ## Prerequisites
 
-- Configure an account on Theia https://sso.theia-land.fr/theia/register/register.xhtml to configure credentials and pull https://github.com/olivierhagolle/theia_download. The folder _theia_download_ available on this git repository is an example of what you should have.
+- Configure an account on Theia https://sso.theia-land.fr/theia/register/register.xhtml to configure credentials and pull https://github.com/olivierhagolle/theia_download. The folder _theia_download_ available on this git repository is an example of what you should get.
 - Download OTB https://www.orfeo-toolbox.org/CookBook/Installation.html for data preprocessing.
 
 ## Environment configuration 
