@@ -1,4 +1,4 @@
-The purpose of this module is to download and preprocess Sentinel-2 satellite imagery data directly from Theia-land from given dates and tile name.
+The purpose of this module is to download and preprocess Sentinel-2 satellite imagery data directly from Theia-land from given dates and a tile name or bounding box.
 
 ## Prerequisites
 
