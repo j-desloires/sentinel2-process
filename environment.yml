@@ -1,0 +1,15 @@
+name: Sentinel2PP
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7
+  - numpy
+  - gdal
+  - fiona
+  - rasterio
+  - pandas
+  - scikit-image
+  - geopandas
+  - earthpy
+
+
