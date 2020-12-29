@@ -1,25 +1,34 @@
 import os
 import pandas as pd
-import unzip_data as unzip_data
-import stack_data as stack_data
-import GapFilling as GapFilling
-import GFSuperImpose as GFSuperImpose
-import VegetationIndices as VegetationIndices
-import training_set as training_set
+import numpy as np
+import Sentinel2Theia.unzip_data as unzip_data
+import Sentinel2Theia.stack_data as stack_data
+import Sentinel2Theia.GapFilling as GapFilling
+import Sentinel2Theia.GFSuperImpose as GFSuperImpose
+import Sentinel2Theia.VegetationIndices as VegetationIndices
+import Sentinel2Theia.training_set as training_set
 
 ###Input files (see readme)
 #Orfeo Toolbox
-otb_path = '/home/johanndesloires/Documents/OTB-7.2.0-Linux64/bin'
+path = '/media/DATA/johann/PUL/TileHG/'
+os.chdir(path)
+otb_path = '/home/johann/OTB-7.2.0-Linux64/bin'
+os.path.exists(otb_path)
 ##Theia folder pulled
-folder_theia = '/home/johanndesloires/Documents/theia_download'
+folder_theia = './Sentinel2/theia_download'
 os.path.exists(folder_theia)
 #Folder to save images preprocessed
-path_output = '/home/johanndesloires/Documents/Sentinel2/GEOTIFFS/TEST'
+path_output = './Sentinel2/GEOTIFFS'
+os.path.exists(path_output)
 #Input vector for training process
-vector_path = './Vectors/DATABASE_SAMPLED/DATABASE_SAMPLED.shp'
+vector_path = './FinalDBPreprocessed/DATABASE_SAMPLED/DATABASE_SAMPLED.shp'
+os.path.exists(vector_path)
 #Polygon of the Area of Interest
-mask_data = './Vectors/INTERSECTION_TILE_DEPARTMENT/INTERSECTION_TILE_DEPARTMENT.shp'
+mask_data = './FinalDBPreprocessed/HG_TILE_INTERSECTION/INTERSECTION_TILE_DEPARTMENT/intersection_hg_tile.shp'
+os.path.exists(mask_data)
 mask_feature = 'DN'
+
+band_names = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12']
 
 ##################################################################################
 #Download Sentinel-2 images
@@ -46,8 +55,7 @@ rasterize_labels.rasterize_labels()
 
 #GEOTIFFS concatenation cropped according to the AOI
 concatenate_images = stack_data.StackFoldersSentinel2(extent_vector=mask_data,
-                                                      bands=['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11',
-                                                             'B12'],
+                                                      bands=band_names,
                                                       res_bands=[10, 10, 10, 20, 20, 20, 10, 20, 20, 20],
                                                       saving_path=path_output,
                                                       folder_theia=folder_theia,
@@ -67,6 +75,7 @@ GapFilling.GapFill(otb_path,
                    path_output,
                    bands=['B5', 'B6', 'B7', 'B8A', 'B11', 'B12'],
                    res=20)
+
 #Put 20 meters images into 10 meters
 GFSuperImpose.GFSuperImpose(otb_path,
                             path_output,
@@ -78,6 +87,14 @@ vis = VegetationIndices.VegetationIndices(saving_path=path_output,
                                           band_names=['B2', 'B4', 'B8', 'B11'])
 
 vis.compute_VIs()
+
+##################################################################################################################
+#CSubset time series
+
+GapFilling.subset_time_series(path_output,band_names,'2019')
+
+GapFilling.subset_time_series(path_output,['NDVI','GNDVI','NDWI'],'2019')
+
 
 ##################################################################################################################
 #Built the training set for given features

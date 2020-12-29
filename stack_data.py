@@ -419,3 +419,4 @@ class StackFoldersSentinel2:
             except:
                 script = "sudo rm " + path
                 subprocess.call(script, shell=True)
+
