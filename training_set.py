@@ -51,26 +51,29 @@ class TrainingSet:
         if os.path.exists(path) is False:
             os.makedirs(path)
 
-    @staticmethod
-    def reformat_labels(target, reference_file):
-
+    def reformat_labels(self, target, file_reference):
         target_to_mask = rasterio.open(target)
         meta = target_to_mask.meta
         target_to_mask = target_to_mask.read(1)
 
-        raster_ref = rasterio.open(reference_file)
+        raster_ref = rasterio.open(file_reference)
         raster_ref = raster_ref.read(1)
         mask = (raster_ref == 0)
 
         arr0 = np.ma.array(target_to_mask,
-                           dtype=np.int16,
+                           dtype=np.uint16,
                            mask=mask,
                            fill_value=0)
 
         target_to_mask = arr0.filled()
+        name_output = target.split('.')
+        name_output[-2] += '_' + '2019'
+        os.remove(target)
 
-        with rasterio.open(target, 'w', **meta) as dst:
+        with rasterio.open('.'.join(name_output), 'w', **meta) as dst:
             dst.write_band(1, target_to_mask)
+
+        self.target = name_output
 
     def prepare_training_set(self):
 
@@ -110,7 +113,7 @@ class TrainingSet:
             array_time = []
             bands_filtered = []
 
-            for array_index in range(1, band.count):
+            for array_index in range(1, band.count+1):
                 band_read = band.read(array_index)
                 array_time.append(band_read)
 
@@ -124,6 +127,7 @@ class TrainingSet:
                 lb = -1
             else:
                 lb = 0
+
             dictionary_meta_info[index_band]['max'] = np.max(array_time[array_time > lb])
             dictionary_meta_info[index_band]['min'] = np.min(array_time[array_time > lb])
             dictionary_meta_info[index_band]['mean'] = np.mean(array_time[array_time > lb])

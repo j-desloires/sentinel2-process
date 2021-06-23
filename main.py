@@ -1,3 +1,9 @@
+import sys
+
+sys.path.insert(0, '/home/johann/Topography/Sentinel2Theia/')
+sys.path.append('../')  #
+
+
 import os
 import pandas as pd
 import numpy as np
@@ -30,16 +36,20 @@ mask_feature = 'DN'
 
 band_names = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12']
 
+#https://satpy.readthedocs.io/en/stable/data_download.html
+
 ##################################################################################
 #Download Sentinel-2 images
+'''
 download = unzip_data.TheiaDownload(folder_theia,
                                     tile_name="T31TCJ",
-                                    start_date="2018-11-20",
-                                    end_date="2018-12-01")
+                                    start_date="2018-12-01",
+                                    end_date="2020-01-31",
+                                    orbit = "51")
 
 download.download_data()
 download.unzip_data()
-
+'''
 ##################################################################################
 #Rasterize labels using a reference file from Sentinel-2 folders
 reference_file = stack_data.GetRandomTheiaFile(folder_theia, band_name='B2')
@@ -48,8 +58,8 @@ rasterize_labels = stack_data.RasterLabels(vector_path=vector_path,
                                            reference_file=reference_file,
                                            extent_vector=mask_data,
                                            saving_path=path_output,
-                                           ObjectID='Class_ID',
-                                           LabelID='Label_Code')
+                                           ObjectID='Object_ID',
+                                           LabelID='Class_ID')
 
 rasterize_labels.rasterize_labels()
 
@@ -81,37 +91,44 @@ GFSuperImpose.GFSuperImpose(otb_path,
                             path_output,
                             bands_20=['B5', 'B6', 'B7', 'B8A', 'B11', 'B12'])
 
+
 ##################################################################################################################
-#Compute NDVI, GNDVI and NDWI
-vis = VegetationIndices.VegetationIndices(saving_path=path_output,
-                                          band_names=['B2', 'B4', 'B8', 'B11'])
+#CSubset time series ; date file automatically saved into this file in the previous steps
+
+dates = pd.read_csv('./Sentinel2/GEOTIFFS/dates.csv')
+
+features_subset = band_names.copy()
+features_subset.extend(['stack_10m_crop','stack_10m_crop'])
+GapFilling.subset_time_series(path_output,dates, features_subset,'2019')
+
+##################################################################################################################
+#Compute NDVI and NDWI
+
+vis = VegetationIndices.VegetationIndices(saving_path=path_output)
 
 vis.compute_VIs()
 
-##################################################################################################################
-#CSubset time series
-
-GapFilling.subset_time_series(path_output,band_names,'2019')
-
-GapFilling.subset_time_series(path_output,['NDVI','GNDVI','NDWI'],'2019')
+#GapFilling.subset_time_series(path_output,dates, ['NDVI','GNDVI','NDWI'],'2019')
 
 
 ##################################################################################################################
+from importlib import reload
+training_set = reload(training_set)
 #Built the training set for given features
-features = ['B2', 'B3', 'B4', 'NDVI', 'GNDVI', 'NDWI']
+features = ['B2', 'B3', 'B4', 'NDVI','NDWI']
 #this file has been automatically create during StackFoldersSentinel2()
 dates = pd.read_csv(os.path.join(path_output, 'dates.csv'))
 #Path to save the output training set
-path_ts = '/home/johanndesloires/Documents/Sentinel2/FinalDB'
+path_ts = '/media/DATA/johann/PUL/TileHG/FinalDBPreprocessed'
 #Random geotiff file created from the steps above that will be used as geo reference
-reference_file = os.path.join(path_output, 'GFstack_B2_crop.tif')
+reference_file = os.path.join(path_output, 'GFstack_B2_crop_2019.tif')
 
 output_files = training_set.TrainingSet(path_images=path_output,
                                         band_names=features,
                                         dates=dates,
                                         saving_path=path_ts,
                                         reference_file=reference_file,
-                                        ObjectID=os.path.join(path_output, 'Class_ID_crop.tif'),
-                                        LabelID=os.path.join(path_output, 'Label_Code_crop.tif'))
+                                        ObjectID=os.path.join(path_output, 'Object_ID_crop.tif'),
+                                        LabelID=os.path.join(path_output, 'Class_ID_crop.tif'))
 
 output_files.prepare_training_set()

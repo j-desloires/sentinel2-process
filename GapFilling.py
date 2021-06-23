@@ -10,7 +10,7 @@ import os
 import pandas as pd
 import numpy as np
 import rasterio
-
+import gdal
 
 def GapFill(otb_path, path_root, bands=['B2', 'B3', 'B4', 'B8'], res=10):
     '''
@@ -25,7 +25,7 @@ def GapFill(otb_path, path_root, bands=['B2', 'B3', 'B4', 'B8'], res=10):
         file = os.path.join(path_root, 'stack_' + band + '_crop.tif')
 
         mask = os.path.join(path_root, 'stack_' + str(res) + 'm_crop.tif')
-        out = os.path.join(path_root, 'GFstack_' + band + '_crop.tif')
+        out = os.path.join(path_root, 'TempoGFstack_' + band + '_crop.tif')
 
         cmd = [os.path.join(otb_path, "otbcli_ImageTimeSeriesGapFilling"),
                "-in", "%s" % file,
@@ -39,17 +39,28 @@ def GapFill(otb_path, path_root, bands=['B2', 'B3', 'B4', 'B8'], res=10):
         shell = False
         subprocess.call(cmd, shell=shell)
         os.remove(file)
+        # Compress the image
+        src_ds = gdal.Open(out)
+        output = os.path.join(path_root, 'GFstack_' + band + '_crop.tif')
+        topts = gdal.TranslateOptions(format='GTiff',
+                                      outputType=gdal.GDT_UInt16,
+                                      creationOptions=['COMPRESS=LZW','GDAL_PAM_ENABLED=NO'],
+                                      bandList=list(range(1, src_ds.RasterCount + 1)))  # gdal.GDT_Byte
 
+        gdal.Translate(output, src_ds, options=topts)
+
+        os.remove(out)
 
 # GapFill(bands = ['B2','B3','B4','B8'], res = 10) #,
 # GapFill(bands =['B5', 'B6', 'B7', 'B8A','B11','B12'], res=20)
 
 
 def subset_time_series(path_output, band_names, year='2019'):
-    dates = pd.read_csv('/'.join(path_output.split('/')[:-1]) + '/dates.csv')
-    dates = np.array(dates['dates'])
+    dates = pd.read_csv(os.path.join(path_output, 'dates.csv'))
     # filter over 2019
-    dates_id = [id for id, k in enumerate(dates) if year in k]
+    dates_id = [id for id, k in enumerate(dates.dates) if year in k]
+    dates = dates.iloc[dates_id, :]
+    dates.to_csv(os.path.join(path_output, 'dates.csv'),index = False)
     tif_files = os.listdir(path_output)
     tif_files = [os.path.join(path_output, k) for k in tif_files
                  if np.any([x in k for x in band_names]) and
@@ -60,13 +71,15 @@ def subset_time_series(path_output, band_names, year='2019'):
         name_output = tif_file.split('.')
         name_output[1] += '_' + year
         name_output = '.'.join(name_output)
-        img = rasterio.open(tif_file)
-        meta = img.meta
-        meta.update(count=len(dates_id) + 1)
 
-        with rasterio.open(name_output, 'w', **meta) as dst:
-            for id, id_d in enumerate(dates_id):
-                array = img.read(id_d + 1)
-                dst.write_band(id + 1, array)
+        src_ds = gdal.Open(tif_file)
+        # Compress the image
+        topts = gdal.TranslateOptions(format='GTiff',
+                                      outputType=gdal.GDT_UInt16,
+                                      creationOptions=['COMPRESS=LZW','GDAL_PAM_ENABLED=NO'],
+                                      bandList=dates_id)  # gdal.GDT_Byte
+
+        gdal.Translate(name_output, src_ds, options=topts)
 
         os.remove(tif_file)
+

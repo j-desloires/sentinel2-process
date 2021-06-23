@@ -2,47 +2,15 @@
 import os
 import numpy as np
 import rasterio
-
+import matplotlib.pyplot as plt
+import gdal
 
 
 class VegetationIndices:
     def __init__(self,
-                 saving_path = './Sentinel2/GEOTIFFS/',
-                 band_names = ['B2', 'B4','B8','B11']):
+                 saving_path = 'Sentinel2/GEOTIFFS'):
 
         self.saving_path = saving_path
-        self.band_names = band_names
-
-    @staticmethod
-    def get_dictionary(saving_path,band_names):
-
-        file_bands = []
-        for band in band_names:
-            for k in os.listdir(saving_path):
-                if band in k.split('_'):
-                    file_bands.append(os.path.join(saving_path, k))
-
-        dictionary_bands = {}
-
-        for index_band, band_name in enumerate(band_names) :
-            print(band_name)
-            band = rasterio.open(file_bands[index_band])
-
-            array_time = []
-            count = 0
-            for array_index in range(1, band.count) :
-                count += 1
-                #if count%10 == 0:  print(count)
-
-                band_read = band.read(array_index)
-                array_time.append(band_read)
-
-            array_time = np.stack(array_time,axis = 0)
-
-            dictionary_bands[band_name] = array_time
-            del array_time
-
-        return dictionary_bands
 
     @staticmethod
     def MetaInfos(saving_path,times):
@@ -53,7 +21,7 @@ class VegetationIndices:
             meta['nodata'] = np.nan
             meta['dtype'] = 'float32'
 
-        meta.update(count=times + 1)
+        meta.update(count=times)
         meta.update(nodata=np.nan)
 
         return meta
@@ -61,46 +29,47 @@ class VegetationIndices:
 
     def WriteTiff(self,array,variable_name,dimT,meta):
 
-        with rasterio.open(os.path.join(self.saving_path, 'GFstack_' + variable_name + '_crop.tif'), 'w', **meta) as dst:
+        path_tempo_file = os.path.join(self.saving_path, 'TempoGFstack_' + variable_name + '_crop_2019.tif')
+        with rasterio.open(path_tempo_file, 'w', **meta) as dst:
             for id in range(dimT):
                 dst.write_band(id + 1, array[id, :, :].astype(np.float32))
         del array
+        src_ds = gdal.Open(path_tempo_file)
+        topts = gdal.TranslateOptions(format='GTiff',
+                                      outputType=gdal.GDT_Float32,
+                                      creationOptions=['COMPRESS=LZW','GDAL_PAM_ENABLED=NO'],
+                                      bandList=list(range(1,src_ds.RasterCount)))  # gdal.GDT_Byte
 
-    def compute_VIs(self,ECNorm = True):
+        gdal.Translate(os.path.join(self.saving_path, 'GFstack_' + variable_name + '_crop_2019.tif'), src_ds, options=topts)
+        os.remove(path_tempo_file)
 
-        dictionary_bands = self.get_dictionary(self.saving_path,self.band_names)
-        random_key = list(dictionary_bands.keys())[0]
-        times = dictionary_bands[random_key].shape[0]
+    def compute_VIs(self,ECNorm = False):
+
+        B3 = gdal.Open(os.path.join(self.saving_path, 'GFstack_B3_crop_2019.tif')).ReadAsArray()
+        B4 = gdal.Open(os.path.join(self.saving_path, 'GFstack_B4_crop_2019.tif')).ReadAsArray()
+        B8 = gdal.Open(os.path.join(self.saving_path, 'GFstack_B8_crop_2019.tif')).ReadAsArray()
+
+        times = B3.shape[0]
         meta = self.MetaInfos(self.saving_path,times)
 
         #Euclidean Norm
         if ECNorm:
-            array_bands = []
-            for key in self.band_names:
-                array_bands.append(dictionary_bands[key])
-
+            array_bands = [B3, B4, B8]
             array_bands = [k.astype(np.int16) for k in array_bands]
             array_bands = np.stack(array_bands,axis = -1)
             array_bands_EC = np.sqrt(np.sum((array_bands+1**2), axis=-1))
+            array_bands_EC += -1
             self.WriteTiff(array_bands_EC, 'ECNorm', times,meta)
 
         # Vegetation indices
-        NDVI= (dictionary_bands['B8']-dictionary_bands['B4'])/(
-                    dictionary_bands['B8']+dictionary_bands['B4'])
-        del dictionary_bands['B4']
+        NDVI= (B8-B4)/(B8+B4)
+        del B4
         self.WriteTiff(NDVI,'NDVI',times,meta)
+        del NDVI
 
-        GNDVI = (dictionary_bands['B8']-dictionary_bands['B2'])/(
-                    dictionary_bands['B8']+dictionary_bands['B2'])
-        del dictionary_bands['B2']
-        self.WriteTiff(GNDVI, 'GNDVI',times,meta)
-
-        NDWI = (dictionary_bands['B8']-dictionary_bands['B11'])/(
-                    dictionary_bands['B8']+dictionary_bands['B11'])
-        del dictionary_bands['B8']
-        del dictionary_bands['B11']
-        self.WriteTiff(NDWI,'NDWI',times,meta)
-
-
+        NDWI = (B3-B8)/(B3+B8)
+        del B3
+        del B8
+        self.WriteTiff(NDWI, 'NDWI', times, meta)
 
 

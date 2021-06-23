@@ -52,7 +52,8 @@ def Open_tiff_array(filename='', band=''):
         if band == '':
             band = 1
         Data = f.GetRasterBand(band).ReadAsArray()
-        Data = Data.astype(np.float32)
+        Data = Data.astype(np.uint16)
+
     return (Data)
 
 
@@ -107,7 +108,7 @@ def Vector_to_Raster(Dir, vector_path, reference_file, attribute):
 
     # Open array
     Raster_out = Open_tiff_array(Dir_Raster_end)
-
+    os.remove(Dir_Raster_end)
     return Raster_out
 
 
@@ -139,7 +140,7 @@ class RasterLabels:
     '''
 
     def __init__(self, vector_path, reference_file, extent_vector, saving_path,
-                 ObjectID='Class_ID', LabelID='Label_Code'):
+                 ObjectID='Object_ID', LabelID='Class_ID'):
         '''
         Rasterization of a vector file (.shp) to get the target variables for the project study.
         Args:
@@ -170,7 +171,7 @@ class RasterLabels:
         mask = skimage.morphology.binary_erosion(mask, disk)
 
         arr0 = np.ma.array(array,
-                           dtype=np.int16,
+                           dtype=np.uint16,
                            mask=(1 - mask).astype(bool),
                            fill_value=0)
         array = arr0.filled()
@@ -181,7 +182,7 @@ class RasterLabels:
         with rasterio.open(self.reference_file) as src0:
             meta = src0.meta
             meta['nodata'] = 0.0
-            meta['dtype'] = 'int16'
+            meta['dtype'] = 'uint16'
 
         class_array = Vector_to_Raster(self.saving_path, self.vector_path, self.reference_file, self.ObjectID)
         class_array = self.binary_erosion(class_array)
@@ -193,15 +194,17 @@ class RasterLabels:
         path_labels = os.path.join(self.saving_path, self.LabelID + '.tif')
 
         with rasterio.open(path_class, 'w', **meta) as dst:
-            dst.write_band(1, class_array.astype(np.int16))
+            dst.write_band(1, class_array.astype(np.uint16))
 
         with rasterio.open(path_labels, 'w', **meta) as dst:
-            dst.write_band(1, label_array.astype(np.int16))
+            dst.write_band(1, label_array.astype(np.uint16))
 
         paths_output = [path_class, path_labels]
         extent = gpd.read_file(self.extent_vector)
 
         es.crop_all(paths_output, self.saving_path, extent, overwrite=True, all_touched=True, verbose=True)
+        os.remove(path_class)
+        os.remove(path_labels)
 
 
 ###########################################################################################
@@ -265,10 +268,11 @@ class StackFoldersSentinel2:
     def array_from_dict(self, band_array, band_name):
 
         band_values = band_array['data']
-        band_values = band_values.astype(np.int16)
+        print(band_values.shape)
+        band_values = band_values.astype(np.uint16)
 
         band_cloud = band_array['CLM']
-        band_cloud = band_cloud.astype(np.int16)
+        band_cloud = band_cloud.astype(np.uint16)
 
         file_reference = GetRandomTheiaFile(self.folder_theia, band_name=band_name)
         geo, proj, size_X, size_Y = Open_array_info(file_reference)
@@ -276,15 +280,18 @@ class StackFoldersSentinel2:
         # Read metadata of first file
         with rasterio.open(file_reference) as src0:
             meta = src0.meta
-            meta['nodata'] = 0.0
+            meta['nodata'] = 0
+            meta['dtype'] = 'uint16'
 
         # Update meta to reflect the number of layers
         id_bands = [ind for ind, k in enumerate(band_array['Cloud_Percent']) if k < self.cloud_coverage]
-        meta.update(count=len(id_bands) + 1)
+        print('Number of images '+ str(len(band_array['Cloud_Percent'])))
+        print('Number of valid images ' + str(len(id_bands)))
+        meta.update(count=len(id_bands))
 
         with rasterio.open(os.path.join(self.saving_path, 'stack_' + band_name + '.tif'), 'w', **meta) as dst:
             for id, time_index in enumerate(id_bands):
-                dst.write_band(id + 1, band_values[time_index, :, :].astype(np.int16))
+                dst.write_band(id + 1, band_values[time_index, :, :].astype(np.uint16))
 
         rsuffix = '20m' if geo[1] == 20 else '10m'
 
@@ -292,11 +299,12 @@ class StackFoldersSentinel2:
         meta['nodata'] = None
         with rasterio.open(os.path.join(self.saving_path, 'stack_' + rsuffix + '.tif'), 'w', **meta) as dst_clm:
             for id, num_band in enumerate(id_bands):
-                dst_clm.write_band(id + 1, band_cloud[num_band, :, :].astype(np.int16))
+                dst_clm.write_band(id + 1, band_cloud[num_band, :, :].astype(np.uint16))
 
         del band_cloud
         del band_values
-
+        print('Number of dates ')
+        print(len(band_array['dates']))
         if os.path.exists(os.path.join(self.saving_path, 'dates.csv')) is False:
             dates = list(band_array['dates'])
             dates = [dates[id_] for id_ in id_bands]
@@ -317,6 +325,7 @@ class StackFoldersSentinel2:
         folders = [folders[i] for i in dates_sorted]
 
         mask_array_10, mask_array_20 = self.get_mask_extent()
+
         mask_data_10 = (mask_array_10 > 0)
         mask_data_20 = (mask_array_20 > 0)
 
@@ -325,7 +334,7 @@ class StackFoldersSentinel2:
         folders_to_remove = []
 
         for band in self.bands:
-            # band = 'B8'
+            #band = 'B8'
             print(band)
             index_band = np.where(np.array(self.bands) == band)[0][0]
             mask_polygon = mask_data_10 if self.res_bands[index_band] == 10 else mask_data_20
@@ -357,19 +366,20 @@ class StackFoldersSentinel2:
                 array = Open_tiff_array(path_band)
 
                 arr0 = np.ma.array(array,
-                                   dtype=np.float32,
+                                   dtype=np.int16,
                                    mask=(1 - mask_polygon).astype(bool),
                                    fill_value=-1)
 
                 array = arr0.filled()
                 array += 1
-                # if half of the images is in no data : unvalid folder => remove it
-                if (np.count_nonzero(array > 0) / np.count_nonzero(mask_polygon)) < 0.5:
 
-                    # script = "sudo rm -rf " + path_list_bands
-                    # call(script,shell=True)
+                # if half of the images is in no data : unvalid folder => remove it
+                if np.count_nonzero((array > 0).astype('int')) / np.count_nonzero(mask_polygon.astype('int')) <0.9:
+                    print('% vlaid (np.count_nonzero(array > 0) / np.count_nonzero(mask_polygon)) < 0.7) ')
+                    script = "sudo rm -rf " + path_list_bands
+                    call(script,shell=True)
                     folders.remove(folder)
-                    shutil.rmtree(path_list_bands)
+                    #shutil.rmtree(path_list_bands)
 
                     pass
                 else:
@@ -384,7 +394,7 @@ class StackFoldersSentinel2:
                     mask = mask > 0
 
                     arr0 = np.ma.array(array,
-                                       dtype=np.float32,
+                                       dtype=np.uint16,
                                        mask=mask,
                                        fill_value=0)
 
@@ -419,4 +429,6 @@ class StackFoldersSentinel2:
             except:
                 script = "sudo rm " + path
                 subprocess.call(script, shell=True)
+
+
 
