@@ -50,6 +50,7 @@ def get_gridded_boundary(shapefile, cell_size=1000):
     # Construct a boolean associated
     booleans = np.array([(1 - k.is_empty) for k in gdf.results])
     gdf['check'] = booleans
-    gdf.check = gdf.check.astype(bool)
+    valid_obs = gdf.check.astype(bool)
+    gdf = gdf.drop(['check'], axis = 1)
 
-    return gdf
+    return gdf[valid_obs]
