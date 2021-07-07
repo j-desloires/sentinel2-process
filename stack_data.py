@@ -17,6 +17,7 @@ import os
 import pathlib
 import shutil
 
+
 def Open_array_info(filename=''):
     """
     Opening a tiff info, for example size of array, projection and transform matrix.
@@ -54,7 +55,7 @@ def Open_tiff_array(filename='', band=''):
         Data = f.GetRasterBand(band).ReadAsArray()
         Data = Data.astype(np.uint16)
 
-    return (Data)
+    return Data
 
 
 def Vector_to_Raster(Dir, vector_path, reference_file, attribute):
@@ -135,9 +136,6 @@ def GetRandomTheiaFile(folder_theia, band_name='B2'):
 
 
 class RasterLabels:
-    '''
-
-    '''
 
     def __init__(self, vector_path, reference_file, extent_vector, saving_path,
                  ObjectID='Object_ID', LabelID='Class_ID'):
