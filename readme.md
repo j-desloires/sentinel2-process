@@ -30,4 +30,14 @@ You must provide the following paths to execute a code from the following files 
 
 
 
+## Description of the outputs
+
+The tile is cropped with respect to the extent of a given shapefile (script main.py, with Haute-Garonne as example in the variable mask_data) :
+- mask_R10_crop.tif : Binary cloud masks at 10 meters (int16)
+- mask_R20_crop.tif : Binary cloud masks at 20 meters (int16)
+- GFstack_X_crop.tif : Gap filled images with original 10 meters bands using linear interpolation (OTB) (float32)
+- GFstack_SI_X_crop.tif : Gap filled images with original 20 meters bands, superimposed at 10 meters, using linear interpolation (OTB) (float32)
+- Class_ID_crop.tif : ID of the class from the training dataset to predict for supervised task (script main.py)
+- Object_ID_crop.tif : ID of the objects from the training dataset 
+- dates.csv : Csv file with acquisition dates that corresponds to the time index of each .tif image (except Class_ID and Objects_ID)
 

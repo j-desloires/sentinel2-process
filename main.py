@@ -7,12 +7,12 @@ sys.path.append('../')  #
 import os
 import pandas as pd
 import numpy as np
-import Sentinel2Theia.unzip_data as unzip_data
-import Sentinel2Theia.stack_data as stack_data
-import Sentinel2Theia.GapFilling as GapFilling
-import Sentinel2Theia.GFSuperImpose as GFSuperImpose
-import Sentinel2Theia.VegetationIndices as VegetationIndices
-import Sentinel2Theia.training_set as training_set
+import unzip_data as unzip_data
+import stack_data as stack_data
+import GapFilling as GapFilling
+import GFSuperImpose as GFSuperImpose
+import VegetationIndices as VegetationIndices
+import training_set as training_set
 
 ###Input files (see readme)
 #Orfeo Toolbox
@@ -40,16 +40,15 @@ band_names = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12']
 
 ##################################################################################
 #Download Sentinel-2 images
-'''
+
 download = unzip_data.TheiaDownload(folder_theia,
-                                    tile_name="T31TCJ",
-                                    start_date="2018-12-01",
-                                    end_date="2020-01-31",
-                                    orbit = "51")
+                                    tile_name="14TNL",
+                                    start_date="2017-01-01",
+                                    end_date="2017-12-31")
 
 download.download_data()
 download.unzip_data()
-'''
+
 ##################################################################################
 #Rasterize labels using a reference file from Sentinel-2 folders
 reference_file = stack_data.GetRandomTheiaFile(folder_theia, band_name='B2')
