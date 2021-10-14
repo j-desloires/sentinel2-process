@@ -37,7 +37,7 @@ The tile is cropped with respect to the extent of a given shapefile (script main
 - mask_R20_crop.tif : Binary cloud masks at 20 meters (int16)
 - GFstack_X_crop.tif : Gap filled images with original 10 meters bands using linear interpolation (OTB) (float32)
 - GFstack_SI_X_crop.tif : Gap filled images with original 20 meters bands, superimposed at 10 meters, using linear interpolation (OTB) (float32)
-- Class_ID_crop.tif : ID of the class from the training dataset to predict for supervised task (script main.py)
-- Object_ID_crop.tif : ID of the objects from the training dataset 
+- Class_ID_crop.tif : ID of the class from the training dataset to predict for supervised task (script main.py) (int16)
+- Object_ID_crop.tif : ID of the objects from the training dataset (int16)
 - dates.csv : Csv file with acquisition dates that corresponds to the time index of each .tif image (except Class_ID and Objects_ID)
 
