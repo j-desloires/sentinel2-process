@@ -12,7 +12,7 @@ class VegetationIndices:
         self.saving_path = saving_path
 
     @staticmethod
-    def MetaInfos(saving_path,times):
+    def _get_meta_infos(saving_path, times):
         random_band = os.listdir(saving_path)[0]
 
         with rasterio.open(os.path.join(saving_path, random_band)) as src0:
@@ -26,7 +26,7 @@ class VegetationIndices:
         return meta
 
 
-    def WriteTiff(self,array,variable_name,dimT,meta):
+    def _write_tiff(self, array, variable_name, dimT, meta):
 
         path_tempo_file = os.path.join(self.saving_path, 'TempoGFstack_' + variable_name + '_crop_2019.tif')
         with rasterio.open(path_tempo_file, 'w', **meta) as dst:
@@ -49,7 +49,7 @@ class VegetationIndices:
         B8 = gdal.Open(os.path.join(self.saving_path, 'GFstack_B8_crop_2019.tif')).ReadAsArray()
 
         times = B3.shape[0]
-        meta = self.MetaInfos(self.saving_path,times)
+        meta = self._get_meta_infos(self.saving_path, times)
 
         #Euclidean Norm
         if ECNorm:
@@ -58,17 +58,17 @@ class VegetationIndices:
             array_bands = np.stack(array_bands,axis = -1)
             array_bands_EC = np.sqrt(np.sum((array_bands+1**2), axis=-1))
             array_bands_EC += -1
-            self.WriteTiff(array_bands_EC, 'ECNorm', times,meta)
+            self._write_tiff(array_bands_EC, 'ECNorm', times, meta)
 
         # Vegetation indices
         NDVI= (B8-B4)/(B8+B4)
         del B4
-        self.WriteTiff(NDVI,'NDVI',times,meta)
+        self._write_tiff(NDVI, 'NDVI', times, meta)
         del NDVI
 
         NDWI = (B3-B8)/(B3+B8)
         del B3
         del B8
-        self.WriteTiff(NDWI, 'NDWI', times, meta)
+        self._write_tiff(NDWI, 'NDWI', times, meta)
 
 

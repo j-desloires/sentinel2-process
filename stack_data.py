@@ -69,10 +69,10 @@ class RasterLabels:
             meta['nodata'] = 0.0
             meta['dtype'] = 'uint16'
 
-        class_array = utils.Vector_to_Raster(self.saving_path, self.vector_path, self.reference_file, self.ObjectID)
+        class_array = utils.vector_to_raster(self.saving_path, self.vector_path, self.reference_file, self.ObjectID)
         class_array = self.binary_erosion(class_array)
 
-        label_array = utils.Vector_to_Raster(self.saving_path, self.vector_path, self.reference_file, self.LabelID)
+        label_array = utils.vector_to_raster(self.saving_path, self.vector_path, self.reference_file, self.LabelID)
         label_array = self.binary_erosion(label_array)
 
         path_class = os.path.join(self.saving_path, self.ObjectID + '.tif')
@@ -138,16 +138,16 @@ class StackFoldersSentinel2:
 
     def _get_mask_extent(self):
 
-        reference_raster_data_name_10 = utils.GetRandomTheiaFile(self.folder_theia, band_name='B2')
+        reference_raster_data_name_10 = utils.get_random_file(self.folder_theia, band_name='B2')
 
-        mask_array_10 = utils.Vector_to_Raster(self.saving_path,
+        mask_array_10 = utils.vector_to_raster(self.saving_path,
                                                self.extent_vector,
                                                reference_raster_data_name_10,
                                                self.name_mask_feature)
 
-        reference_raster_data_name_20 = utils.GetRandomTheiaFile(self.folder_theia, band_name='B5')
+        reference_raster_data_name_20 = utils.get_random_file(self.folder_theia, band_name='B5')
 
-        mask_array_20 = utils.Vector_to_Raster(self.saving_path,
+        mask_array_20 = utils.vector_to_raster(self.saving_path,
                                                self.extent_vector,
                                                reference_raster_data_name_20,
                                                self.name_mask_feature)
@@ -163,8 +163,8 @@ class StackFoldersSentinel2:
         band_cloud = band_array['CLM']
         band_cloud = band_cloud.astype(np.uint16)
 
-        file_reference = utils.GetRandomTheiaFile(self.folder_theia, band_name=band_name)
-        geo, proj, size_X, size_Y = utils.Open_array_info(file_reference)
+        file_reference = utils.get_random_file(self.folder_theia, band_name=band_name)
+        geo, proj, size_X, size_Y = utils.open_array_info(file_reference)
 
         # Read metadata of first file
         with rasterio.open(file_reference) as src0:
@@ -205,7 +205,7 @@ class StackFoldersSentinel2:
         del band_array
 
     def _mask_cloud(self, path_band, path_list_bands, index_band, mask_polygon):
-        array = utils.Open_tiff_array(path_band)
+        array = utils.open_tiff_array(path_band)
 
         arr0 = np.ma.array(array,
                            dtype=np.int16,
@@ -235,7 +235,7 @@ class StackFoldersSentinel2:
             ]
 
             path_cloud = os.path.join(os.path.join(path_list_bands, 'MASKS'), file_cloud[0])
-            mask = utils.Open_tiff_array(path_cloud)
+            mask = utils.open_tiff_array(path_cloud)
             mask = mask > 0
 
             arr0 = np.ma.array(array,

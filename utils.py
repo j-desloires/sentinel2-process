@@ -7,7 +7,7 @@ import gdal
 import os
 
 
-def Open_array_info(filename=''):
+def open_array_info(filename=''):
     """
     Opening a tiff info, for example size of array, projection and transform matrix.
     Keyword Arguments:
@@ -27,7 +27,7 @@ def Open_array_info(filename=''):
     return geo_out, proj, size_X, size_Y
 
 
-def Open_tiff_array(filename='', band=''):
+def open_tiff_array(filename='', band=''):
     """
     Opening a tiff array.
     Keyword Arguments:
@@ -48,7 +48,7 @@ def Open_tiff_array(filename='', band=''):
     return Data
 
 
-def Vector_to_Raster(Dir, vector_path, reference_file, attribute):
+def vector_to_raster(Dir, vector_path, reference_file, attribute):
     """
     This function creates a raster of a vector_path file
 
@@ -58,7 +58,7 @@ def Vector_to_Raster(Dir, vector_path, reference_file, attribute):
     attrbute (str) : column name of the attribute to rasterize
     """
 
-    geo, proj, size_X, size_Y = Open_array_info(reference_file)
+    geo, proj, size_X, size_Y = open_array_info(reference_file)
 
     x_min = geo[0]
     x_max = geo[0] + size_X * geo[1]
@@ -98,12 +98,12 @@ def Vector_to_Raster(Dir, vector_path, reference_file, attribute):
     target_ds = None
 
     # Open array
-    Raster_out = Open_tiff_array(Dir_Raster_end)
+    Raster_out = open_tiff_array(Dir_Raster_end)
     os.remove(Dir_Raster_end)
     return Raster_out
 
 
-def GetRandomTheiaFile(folder_theia, band_name='B2'):
+def get_random_file(folder_theia, band_name='B2'):
     '''
     Find a random tif images from the folders downloaded to get informations for the rasterization.
     Args:

@@ -54,7 +54,7 @@ class TheiaDownload:
                        "-f", "%s" % self.end_date,
                        "-r", "%s" % self.orbit]
 
-            shell = False  # if run through terminal using python3 GapFilling.py
+            shell = False  # if run through terminal using python3 gap_filling.py
             subprocess.Popen(cmd, shell=shell)
 
         except:

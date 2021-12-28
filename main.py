@@ -3,15 +3,14 @@ import sys
 sys.path.insert(0, '/home/johann/Topography/Sentinel2Theia/')
 sys.path.append('../')  #
 
-
 import os
 import pandas as pd
 import numpy as np
 import unzip_data as unzip_data
 import stack_data as stack_data
-import GapFilling as GapFilling
-import GFSuperImpose as GFSuperImpose
-import VegetationIndices as VegetationIndices
+import gap_filling as gap_filling
+import superimpose as superimpose
+import vegetation_indices as vegetation_indices
 import training_set as training_set
 
 ###Input files (see readme)
@@ -51,7 +50,7 @@ download.unzip_data()
 
 ##################################################################################
 #Rasterize labels using a reference file from Sentinel-2 folders
-reference_file = utils.GetRandomTheiaFile(folder_theia, band_name='B2')
+reference_file = utils.get_random_file(folder_theia, band_name='B2')
 
 rasterize_labels = stack_data.RasterLabels(vector_path=vector_path,
                                            reference_file=reference_file,
@@ -75,20 +74,22 @@ concatenate_images.crop_images()
 
 ###############################################################################################################
 #Cloud masking interpolation
-GapFilling.GapFill(otb_path,
+gap_filling.GapFill(otb_path,
                    path_output,
                    bands=['B2', 'B3', 'B4', 'B8'],
                    res=10)
 
-GapFilling.GapFill(otb_path,
+gap_filling.GapFill(otb_path,
                    path_output,
                    bands=['B5', 'B6', 'B7', 'B8A', 'B11', 'B12'],
                    res=20)
 
 #Put 20 meters images into 10 meters
-GFSuperImpose.GFSuperImpose(otb_path,
-                            path_output,
-                            bands_20=['B5', 'B6', 'B7', 'B8A', 'B11', 'B12'])
+
+workflow_si = superimpose.GFSuperImpose(otb_path,
+                                        path_output,
+                                        bands_20=['B5', 'B6', 'B7', 'B8A', 'B11', 'B12'])
+workflow_si.execute_superimpose()
 
 
 ##################################################################################################################
@@ -98,12 +99,12 @@ dates = pd.read_csv('./Sentinel2/GEOTIFFS/dates.csv')
 
 features_subset = band_names.copy()
 features_subset.extend(['stack_10m_crop','stack_10m_crop'])
-GapFilling.subset_time_series(path_output, features_subset, '2019')
+gap_filling.subset_time_series(path_output, features_subset, '2019')
 
 ##################################################################################################################
 #Compute NDVI and NDWI
 
-vis = VegetationIndices.VegetationIndices(saving_path=path_output)
+vis = vegetation_indices.VegetationIndices(saving_path=path_output)
 vis.compute_VIs()
 
 ##################################################################################################################
