@@ -42,7 +42,7 @@ band_names = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12']
 #Download Sentinel-2 images
 
 download = unzip_data.TheiaDownload(folder_theia,
-                                    tile_name="14TNL",
+                                    tile_name="31TCJ",
                                     start_date="2017-01-01",
                                     end_date="2017-12-31")
 
@@ -98,21 +98,15 @@ dates = pd.read_csv('./Sentinel2/GEOTIFFS/dates.csv')
 
 features_subset = band_names.copy()
 features_subset.extend(['stack_10m_crop','stack_10m_crop'])
-GapFilling.subset_time_series(path_output,dates, features_subset,'2019')
+GapFilling.subset_time_series(path_output, features_subset, '2019')
 
 ##################################################################################################################
 #Compute NDVI and NDWI
 
 vis = VegetationIndices.VegetationIndices(saving_path=path_output)
-
 vis.compute_VIs()
 
-#GapFilling.subset_time_series(path_output,dates, ['NDVI','GNDVI','NDWI'],'2019')
-
-
 ##################################################################################################################
-from importlib import reload
-training_set = reload(training_set)
 #Built the training set for given features
 features = ['B2', 'B3', 'B4', 'NDVI','NDWI']
 #this file has been automatically create during StackFoldersSentinel2()
