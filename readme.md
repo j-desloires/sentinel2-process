@@ -10,9 +10,9 @@ The purpose of this module is to download and preprocess Sentinel-2 satellite im
 Using anaconda, create the environment using :
 
 ```
-cd Sentinel2PP
+cd sentinel2-process
 conda env create -f environment.yml
-conda activate Sentinel2PP
+conda activate sentinel2-process
 ```
 
 ## Usage

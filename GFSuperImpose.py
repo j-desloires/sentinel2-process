@@ -3,19 +3,22 @@ import numpy as np
 import subprocess
 import gdal
 
-def GFSuperImpose(otb_path, path_root, bands_20=['B5', 'B6', 'B7', 'B8A', 'B11', 'B12']):
+def GFSuperImpose(otb_path, path_root, bands_20=None):
     '''
     Args:
         path_root (str) : folder that contains GEOTIFFS file obtained from stack_data.py
         otb_path (str) : folder where OTB is installed
         bands_20 (list) : name of the bands in 20m that will be superimposed into 10 meters
     '''
+    if bands_20 is None:
+        bands_20 = ['B5', 'B6', 'B7', 'B8A', 'B11', 'B12']
+
     tif_10_meters = []
     tif_20_meters = []
 
     for k in os.listdir(path_root):
         if np.any([x in k for x in ['GF']]):
-            if np.any([x in k for x in ['B5', 'B6', 'B7', 'B8A', 'B11', 'B12']]):
+            if np.any([x in k for x in bands_20]):
                 tif_20_meters.append(k)
             elif np.any([x in k for x in ['B2', 'B3', 'B4', 'B8']]):
                 tif_10_meters.append(k)

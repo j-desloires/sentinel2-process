@@ -51,7 +51,7 @@ download.unzip_data()
 
 ##################################################################################
 #Rasterize labels using a reference file from Sentinel-2 folders
-reference_file = stack_data.GetRandomTheiaFile(folder_theia, band_name='B2')
+reference_file = utils.GetRandomTheiaFile(folder_theia, band_name='B2')
 
 rasterize_labels = stack_data.RasterLabels(vector_path=vector_path,
                                            reference_file=reference_file,
@@ -70,8 +70,8 @@ concatenate_images = stack_data.StackFoldersSentinel2(extent_vector=mask_data,
                                                       folder_theia=folder_theia,
                                                       name_mask_feature='DN')
 
-concatenate_images.ExtractImagesFolder()
-concatenate_images.CropImages()
+concatenate_images.extract_images_folder()
+concatenate_images.crop_images()
 
 ###############################################################################################################
 #Cloud masking interpolation

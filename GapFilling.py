@@ -12,7 +12,7 @@ import numpy as np
 import rasterio
 import gdal
 
-def GapFill(otb_path, path_root, bands=['B2', 'B3', 'B4', 'B8'], res=10):
+def GapFill(otb_path, path_root, bands=None, res=10):
     '''
     Gapfilling given a folder outputs from the script stack_data.py.
     Args:
@@ -21,6 +21,8 @@ def GapFill(otb_path, path_root, bands=['B2', 'B3', 'B4', 'B8'], res=10):
         res int : resolution of the bands defined in the parameter bands
     '''
 
+    if bands is None:
+        bands = ['B2', 'B3', 'B4', 'B8']
     for band in bands:
         file = os.path.join(path_root, 'stack_' + band + '_crop.tif')
 
@@ -50,9 +52,6 @@ def GapFill(otb_path, path_root, bands=['B2', 'B3', 'B4', 'B8'], res=10):
         gdal.Translate(output, src_ds, options=topts)
 
         os.remove(out)
-
-# GapFill(bands = ['B2','B3','B4','B8'], res = 10) #,
-# GapFill(bands =['B5', 'B6', 'B7', 'B8A','B11','B12'], res=20)
 
 
 def subset_time_series(path_output, band_names, year='2019'):

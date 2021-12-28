@@ -1,4 +1,4 @@
-name: Sentinel2PP
+name: sentinel2-process
 channels:
   - conda-forge
 dependencies:
