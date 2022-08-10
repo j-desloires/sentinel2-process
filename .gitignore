@@ -6,6 +6,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
+.idea/
 venv/
 build/
 develop-eggs/
@@ -25,7 +26,8 @@ wheels/
 
 # IDE config
 .idea
-build/lib/eocrops
+build/lib/
+venv
 
 
 # pytest
