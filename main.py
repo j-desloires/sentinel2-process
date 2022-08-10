@@ -12,6 +12,7 @@ import gap_filling as gap_filling
 import superimpose as superimpose
 import vegetation_indices as vegetation_indices
 import training_set as training_set
+import utils as utils
 
 ###Input files (see readme)
 #Orfeo Toolbox
@@ -20,16 +21,16 @@ os.chdir(path)
 otb_path = '/home/johann/OTB-7.2.0-Linux64/bin'
 os.path.exists(otb_path)
 ##Theia folder pulled
-folder_theia = './Sentinel2/theia_download'
+folder_theia = './theia_download'
 os.path.exists(folder_theia)
 #Folder to save images preprocessed
 path_output = './Sentinel2/GEOTIFFS'
 os.path.exists(path_output)
 #Input vector for training process
-vector_path = './FinalDBPreprocessed/DATABASE_SAMPLED/DATABASE_SAMPLED.shp'
+vector_path = './data/DATABASE_SAMPLED/DATABASE_SAMPLED.shp'
 os.path.exists(vector_path)
 #Polygon of the Area of Interest
-mask_data = './FinalDBPreprocessed/HG_TILE_INTERSECTION/INTERSECTION_TILE_DEPARTMENT/intersection_hg_tile.shp'
+mask_data = './data/HG_TILE_INTERSECTION/INTERSECTION_TILE_DEPARTMENT/intersection_hg_tile.shp'
 os.path.exists(mask_data)
 mask_feature = 'DN'
 
