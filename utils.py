@@ -7,7 +7,7 @@ import gdal
 import os
 
 
-def open_array_info(filename=''):
+def open_array_info(filename=""):
     """
     Opening a tiff info, for example size of array, projection and transform matrix.
     Keyword Arguments:
@@ -17,7 +17,7 @@ def open_array_info(filename=''):
     global geo_out, proj, size_X, size_Y
     f = gdal.Open(r"%s" % filename)
     if f is None:
-        print('%s does not exists' % filename)
+        print("%s does not exists" % filename)
     else:
         geo_out = f.GetGeoTransform()
         proj = f.GetProjection()
@@ -27,7 +27,7 @@ def open_array_info(filename=''):
     return geo_out, proj, size_X, size_Y
 
 
-def open_tiff_array(filename='', band=''):
+def open_tiff_array(filename="", band=""):
     """
     Opening a tiff array.
     Keyword Arguments:
@@ -38,9 +38,9 @@ def open_tiff_array(filename='', band=''):
     """
     f = gdal.Open(filename)
     if f is None:
-        print('%s does not exists' % filename)
+        print("%s does not exists" % filename)
     else:
-        if band == '':
+        if band == "":
             band = 1
         Data = f.GetRasterBand(band).ReadAsArray()
         Data = Data.astype(np.uint16)
@@ -66,9 +66,10 @@ def vector_to_raster(Dir, vector_path, reference_file, attribute):
     y_max = geo[3]
     pixel_size = geo[1]
 
-
     Basename = os.path.basename(vector_path)
-    Dir_Raster_end = os.path.join(Dir, os.path.splitext(Basename)[0] + '_' + attribute + '.tif')
+    Dir_Raster_end = os.path.join(
+        Dir, os.path.splitext(Basename)[0] + "_" + attribute + ".tif"
+    )
 
     # Open the data source and read in the extent
     source_ds = ogr.Open(vector_path)
@@ -79,10 +80,9 @@ def vector_to_raster(Dir, vector_path, reference_file, attribute):
     y_res = int(round((y_max - y_min) / pixel_size))
 
     # Create tiff file
-    target_ds = gdal.GetDriverByName('GTiff').Create(Dir_Raster_end,
-                                                     x_res, y_res,
-                                                     1, gdal.GDT_UInt16,
-                                                     ['COMPRESS=LZW'])
+    target_ds = gdal.GetDriverByName("GTiff").Create(
+        Dir_Raster_end, x_res, y_res, 1, gdal.GDT_UInt16, ["COMPRESS=LZW"]
+    )
 
     target_ds.SetGeoTransform(geo)
     srse = osr.SpatialReference()
@@ -93,8 +93,9 @@ def vector_to_raster(Dir, vector_path, reference_file, attribute):
     band.Fill(0)
 
     # Rasterize the shape and save it as band in tiff file
-    gdal.RasterizeLayer(target_ds, [1], source_layer,
-                        None, None, [1], ['ATTRIBUTE=' + attribute])
+    gdal.RasterizeLayer(
+        target_ds, [1], source_layer, None, None, [1], ["ATTRIBUTE=" + attribute]
+    )
     target_ds = None
 
     # Open array
@@ -103,20 +104,25 @@ def vector_to_raster(Dir, vector_path, reference_file, attribute):
     return Raster_out
 
 
-def get_random_file(folder_theia, band_name='B2'):
-    '''
+def get_random_file(folder_theia, band_name="B2"):
+    """
     Find a random tif images from the folders downloaded to get informations for the rasterization.
     Args:
         folder_theia (str): Name of the folder from the git repo cloned
         band_name (str) : band name used as reference (here, B2 for 10 meters images)
     Returns:
 
-    '''
-    path_folder = [os.path.join(folder_theia, k)
-                   for k in os.listdir(folder_theia)
-                   if ~np.any([x in k for x in ['zip', 'cfg', 'json', 'md', 'py', 'tmp']])]
+    """
+    path_folder = [
+        os.path.join(folder_theia, k)
+        for k in os.listdir(folder_theia)
+        if ~np.any([x in k for x in ["zip", "cfg", "json", "md", "py", "tmp"]])
+    ]
 
-    path_random_band = [os.path.join(path_folder[0], k) for k in os.listdir(path_folder[0])
-                        if np.all([x in k for x in ['FRE']]) and k.split('_')[-1] == band_name + '.tif']
+    path_random_band = [
+        os.path.join(path_folder[0], k)
+        for k in os.listdir(path_folder[0])
+        if np.all([x in k for x in ["FRE"]]) and k.split("_")[-1] == band_name + ".tif"
+    ]
 
     return path_random_band[0]

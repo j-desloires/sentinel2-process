@@ -7,15 +7,17 @@ import pathlib
 
 
 class TrainingSet:
-    def __init__(self,
-                 path_images,
-                 dates,
-                 band_names,
-                 saving_path,
-                 reference_file,
-                 ObjectID,
-                 LabelID):
-        '''
+    def __init__(
+        self,
+        path_images,
+        dates,
+        band_names,
+        saving_path,
+        reference_file,
+        ObjectID,
+        LabelID,
+    ):
+        """
         Prepare the training set given different input paths, obtained from the output of previous functions
         Args:
             path_images (str): Path where tif images obtained from stack_data.py are saved
@@ -25,7 +27,7 @@ class TrainingSet:
             reference_file (str): path of a .tif reference file at 10 meters scale
             ObjectID (str): path for the.tif that corresponds to the object ids of LULC
             LabelID (str): path for the .tif files which class to predict
-        '''
+        """
 
         self.path_images = path_images
         self.band_names = band_names
@@ -40,7 +42,7 @@ class TrainingSet:
 
         for band in band_names:
             for k in os.listdir(path_images):
-                if band in k.split('_'):
+                if band in k.split("_"):
                     self.file_bands.append(os.path.join(path_images, k))
 
         self.ObjectID = ObjectID
@@ -58,35 +60,34 @@ class TrainingSet:
 
         raster_ref = rasterio.open(file_reference)
         raster_ref = raster_ref.read(1)
-        mask = (raster_ref == 0)
+        mask = raster_ref == 0
 
-        arr0 = np.ma.array(target_to_mask,
-                           dtype=np.uint16,
-                           mask=mask,
-                           fill_value=0)
+        arr0 = np.ma.array(target_to_mask, dtype=np.uint16, mask=mask, fill_value=0)
 
         target_to_mask = arr0.filled()
-        name_output = target.split('.')
-        name_output[-2] += '_' + '2019'
+        name_output = target.split(".")
+        name_output[-2] += "_" + "2019"
         os.remove(target)
 
-        with rasterio.open('.'.join(name_output), 'w', **meta) as dst:
+        with rasterio.open(".".join(name_output), "w", **meta) as dst:
             dst.write_band(1, target_to_mask)
 
         self.target = name_output
 
-    def _get_meta_info(self, dictionary_meta_info, dictionary_bands, filter_observation):
+    def _get_meta_info(
+        self, dictionary_meta_info, dictionary_bands, filter_observation
+    ):
         # scaling
         for index_band in self.file_bands:
             dictionary_meta_info[index_band] = {}
-            band_name = index_band.split('/')[-1].split('_')[-2]
+            band_name = index_band.split("/")[-1].split("_")[-2]
             print(band_name)
             band = rasterio.open(index_band)
 
             array_time = []
             bands_filtered = []
 
-            for array_index in range(1, band.count+1):
+            for array_index in range(1, band.count + 1):
                 band_read = band.read(array_index)
                 array_time.append(band_read)
 
@@ -97,16 +98,28 @@ class TrainingSet:
             # Get statistics from the image
             array_time = np.stack(array_time, axis=0)
             lb = -1 if band_name not in self.band_names else 0
-            dictionary_meta_info[index_band]['max'] = np.max(array_time[array_time > lb])
-            dictionary_meta_info[index_band]['min'] = np.min(array_time[array_time > lb])
-            dictionary_meta_info[index_band]['mean'] = np.mean(array_time[array_time > lb])
-            dictionary_meta_info[index_band]['median'] = np.median(array_time[array_time > lb])
-            dictionary_meta_info[index_band]['std'] = np.std(array_time[array_time > lb])
+            dictionary_meta_info[index_band]["max"] = np.max(
+                array_time[array_time > lb]
+            )
+            dictionary_meta_info[index_band]["min"] = np.min(
+                array_time[array_time > lb]
+            )
+            dictionary_meta_info[index_band]["mean"] = np.mean(
+                array_time[array_time > lb]
+            )
+            dictionary_meta_info[index_band]["median"] = np.median(
+                array_time[array_time > lb]
+            )
+            dictionary_meta_info[index_band]["std"] = np.std(
+                array_time[array_time > lb]
+            )
 
             bands_filtered = np.stack(bands_filtered, axis=1)
             dictionary_bands[band_name] = bands_filtered
 
-        with open(os.path.join(self.saving_path, 'dictionary_meta_info.pickle'), 'wb') as d:
+        with open(
+            os.path.join(self.saving_path, "dictionary_meta_info.pickle"), "wb"
+        ) as d:
             pickle.dump(dictionary_meta_info, d, protocol=pickle.HIGHEST_PROTOCOL)
 
         return dictionary_bands
@@ -133,30 +146,38 @@ class TrainingSet:
         xv, yv = np.meshgrid(x, y)
 
         dictionary_bands = {}
-        dictionary_meta_info = dict(coordinates_x=xv.flatten()[filter_observation],
-                                    coordinates_y=yv.flatten()[filter_observation],
-                                    LabelID=array_target1[filter_observation],
-                                    ObjectID=array_target2[filter_observation], bands=self.file_bands,
-                                    dates=list(self.dates.dates))
+        dictionary_meta_info = dict(
+            coordinates_x=xv.flatten()[filter_observation],
+            coordinates_y=yv.flatten()[filter_observation],
+            LabelID=array_target1[filter_observation],
+            ObjectID=array_target2[filter_observation],
+            bands=self.file_bands,
+            dates=list(self.dates.dates),
+        )
 
-        dictionary_bands = self._get_meta_info(dictionary_meta_info, dictionary_bands, filter_observation)
+        dictionary_bands = self._get_meta_info(
+            dictionary_meta_info, dictionary_bands, filter_observation
+        )
 
-        dictionary_bands['LabelID'] = array_target1[filter_observation]
-        dictionary_bands['ObjectID'] = array_target2[filter_observation]
+        dictionary_bands["LabelID"] = array_target1[filter_observation]
+        dictionary_bands["ObjectID"] = array_target2[filter_observation]
 
         bands_concatenated = []
 
         for key in dictionary_bands:
-            if key in ['ObjectID', 'LabelID']:
+            if key in ["ObjectID", "LabelID"]:
                 cols = [key]
             else:
-                cols = [key + '_' + self.dates.dates[id_] for id_ in range(self.dates.shape[0])]
+                cols = [
+                    key + "_" + self.dates.dates[id_]
+                    for id_ in range(self.dates.shape[0])
+                ]
             df_array = pd.DataFrame(dictionary_bands[key], columns=cols)
             print(df_array.shape)
             bands_concatenated.append(df_array)
 
         bands_concatenated = pd.concat(bands_concatenated, axis=1)
 
-        bands_concatenated.to_csv(os.path.join(self.saving_path, 'training_set.csv'), index=False)
-
-
+        bands_concatenated.to_csv(
+            os.path.join(self.saving_path, "training_set.csv"), index=False
+        )
