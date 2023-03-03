@@ -125,7 +125,6 @@ class TrainingSet:
         return dictionary_bands
 
     def prepare_training_set(self):
-
         self._reformat_labels(self.LabelID, self.reference_file)
         self._reformat_labels(self.ObjectID, self.reference_file)
 

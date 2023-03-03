@@ -31,7 +31,6 @@ class OptionParser(optparse.OptionParser):
 
 
 def checkDate(date_string):
-
     d = date_string.split("-")
     try:
         year = d[0]

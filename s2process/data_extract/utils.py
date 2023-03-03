@@ -15,9 +15,9 @@ def open_array_info(filename=""):
         string that defines the input tiff file or gdal file
     """
     global geo_out, proj, size_X, size_Y
-    f = gdal.Open(r"%s" % filename)
+    f = gdal.Open(f"{filename}")
     if f is None:
-        print("%s does not exists" % filename)
+        print(f"{filename} does not exists")
     else:
         geo_out = f.GetGeoTransform()
         proj = f.GetProjection()
@@ -38,7 +38,7 @@ def open_tiff_array(filename="", band=""):
     """
     f = gdal.Open(filename)
     if f is None:
-        print("%s does not exists" % filename)
+        print(f"{filename} does not exists")
     else:
         if band == "":
             band = 1
@@ -68,7 +68,7 @@ def vector_to_raster(Dir, vector_path, reference_file, attribute):
 
     Basename = os.path.basename(vector_path)
     Dir_Raster_end = os.path.join(
-        Dir, os.path.splitext(Basename)[0] + "_" + attribute + ".tif"
+        Dir, f"{os.path.splitext(Basename)[0]}_{attribute}.tif"
     )
 
     # Open the data source and read in the extent
@@ -94,8 +94,9 @@ def vector_to_raster(Dir, vector_path, reference_file, attribute):
 
     # Rasterize the shape and save it as band in tiff file
     gdal.RasterizeLayer(
-        target_ds, [1], source_layer, None, None, [1], ["ATTRIBUTE=" + attribute]
+        target_ds, [1], source_layer, None, None, [1], [f"ATTRIBUTE={attribute}"]
     )
+
     target_ds = None
 
     # Open array
@@ -122,7 +123,7 @@ def get_random_file(folder_theia, band_name="B2"):
     path_random_band = [
         os.path.join(path_folder[0], k)
         for k in os.listdir(path_folder[0])
-        if np.all([x in k for x in ["FRE"]]) and k.split("_")[-1] == band_name + ".tif"
+        if np.all([x in k for x in ["FRE"]]) and k.split("_")[-1] == f"{band_name}.tif"
     ]
 
     return path_random_band[0]

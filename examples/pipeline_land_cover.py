@@ -1,23 +1,21 @@
-import sys
-
-sys.path.insert(0, "/home/johann/Topography/Sentinel2Theia/")
-sys.path.append("../")  #
 
 import os
 import pandas as pd
 import numpy as np
-import unzip_data as unzip_data
-import stack_data as stack_data
-import gap_filling as gap_filling
-import superimpose as superimpose
-import vegetation_indices as vegetation_indices
-import training_set as training_set
-import utils as utils
+from s2process.data_extract import stack_data as stack_data, unzip_data as unzip_data, utils as utils
+from s2process.data_process import (
+    gap_filling as gap_filling,
+    superimpose as superimpose,
+    training_set as training_set,
+    vegetation_indices as vegetation_indices,
+)
+from pathlib import Path
 
-###Input files (see readme)
+path_ressources = os.path.join(Path(os.getcwd()).parent, "data")
+os.chdir(path_ressources)
+
+###Input files (see readme.MD)
 # Orfeo Toolbox
-path = "/media/DATA/johann/PUL/TileHG/"
-os.chdir(path)
 otb_path = "/home/johann/OTB-7.2.0-Linux64/bin"
 os.path.exists(otb_path)
 ##Theia folder pulled
@@ -27,17 +25,17 @@ os.path.exists(folder_theia)
 path_output = "./Sentinel2/GEOTIFFS"
 os.path.exists(path_output)
 # Input vector for training process
-vector_path = "./data/DATABASE_SAMPLED/DATABASE_SAMPLED.shp"
+vector_path = "./DATABASE_SAMPLED/DATABASE_SAMPLED.shp"
 os.path.exists(vector_path)
 # Polygon of the Area of Interest
 mask_data = (
-    "./data/HG_TILE_INTERSECTION/INTERSECTION_TILE_DEPARTMENT/intersection_hg_tile.shp"
+    "./HG_TILE_INTERSECTION/INTERSECTION_TILE_DEPARTMENT/intersection_hg_tile.shp"
 )
 os.path.exists(mask_data)
+# By default, mask for theia
 mask_feature = "DN"
 
 band_names = ["B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B11", "B12"]
-
 # https://satpy.readthedocs.io/en/stable/data_download.html
 
 ##################################################################################
